@@ -3,6 +3,7 @@ import os
 
 import discord
 import serial
+import time
 
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -20,7 +21,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 # Open the serial port
-ser = serial.Serial('COM3', 115200)
+ser = serial.Serial('/dev/cu.usbserial-14110', 115200)
 
 # # prints on successful connect
 @bot.event
@@ -63,5 +64,18 @@ async def send(ctx, arg):
     data = int(arg)
     ser.write(data)
     await ctx.send(f'Sent data: {data}')
+
+# light test
+@bot.command()
+async def light(ctx, arg):
+    if arg.lower() == "on":
+        print("The LED is on...")
+        time.sleep(1) 
+        ser.write('ON'.encode())
+    elif arg.lower() == "off":
+        print("The LED is off...")
+        time.sleep(1) 
+        ser.write('OFF'.encode())
+    await ctx.send(f'Light status: {arg}')
 
 bot.run(TOKEN)
