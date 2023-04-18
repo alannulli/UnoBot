@@ -21,7 +21,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 # Open the serial port
-ser = serial.Serial('/dev/cu.usbserial-14110', 115200)
+# ser = serial.Serial('COM3', 115200)
 
 # # prints on successful connect
 @bot.event
@@ -36,14 +36,6 @@ async def on_member_join(member):
     if channel is not None:
         await channel.send(f'Welcome to the server, {member.mention}!')
 
-# # repeats message received
-# @bot.event
-# async def on_message(msg):
-#     if msg.author == bot.user:
-#         return
-
-#     await msg.channel.send(f'received: {msg.content}')
-
 # echos back user input message
 @bot.command()
 async def echo(ctx, arg):
@@ -52,7 +44,7 @@ async def echo(ctx, arg):
 
 # read arduino serial port
 @bot.command()
-async def readTemp(ctx):
+async def readSerial(ctx):
     print('reading current temp')
     data = ser.readline().decode().rstrip()
     await ctx.send(f'Received data: {data}')
