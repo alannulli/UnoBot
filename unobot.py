@@ -20,7 +20,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 # sets up discord bot client and also bot that takes commands
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-# Open the serial port
+# Open the serial port, change to match your arduino port settings
 # ser = serial.Serial('COM3', 115200)
 
 # # prints on successful connect
