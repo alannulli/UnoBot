@@ -21,7 +21,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 # Open the serial port
-ser = serial.Serial('/dev/cu.usbserial-14110', 115200)
+ser = serial.Serial('/dev/cu.usbserial-14410', 9600)
 
 # # prints on successful connect
 @bot.event
@@ -52,10 +52,22 @@ async def echo(ctx, arg):
 
 # read arduino serial port
 @bot.command()
-async def readTemp(ctx):
-    print('reading current temp')
-    data = ser.readline().decode().rstrip()
-    await ctx.send(f'Received data: {data}')
+async def getTemp(ctx):
+    print('getting current temp')
+    # ser.write('getTemp'.encode())
+    # data = ser.readline().decode().rstrip()
+    data = ser.read(5)
+    data = str(data, encoding='utf-8')
+    await ctx.send(f'Temperature data: {data}')
+
+#TODO
+#tempRec command (print temp recs for hot, cold, and room temp drink)
+#setTemp command (let user set whatever temp BUT have a max and min so people cant set to 400 or something)
+
+@bot.command()
+async def makeHotter(ctx):
+    print('making hotter')
+    ser.write('makeHotter'.encode())
 
 # send data to serial port
 @bot.command()
