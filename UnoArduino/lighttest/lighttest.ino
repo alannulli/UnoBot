@@ -23,12 +23,16 @@ void loop() {
   }
 
   String serialListener = Serial.readString();
-    Serial.println(serialListener);
-    if (serialListener == "ON") {
-        analogWrite(redPin, 255);
-    }
-    else if (serialListener == "OFF") {
-        analogWrite(redPin, 0);
-    } 
+  Serial.println(serialListener);
+  if (serialListener == "ON") {
+      analogWrite(redPin, 255);
+  }
+  else if (serialListener == "OFF") {
+      analogWrite(redPin, 0);
+  } 
+  else if (sereailListener == "getTemp") {
+      float a = sensors.getTempFByIndex(0);
+      
+  }
   
 }

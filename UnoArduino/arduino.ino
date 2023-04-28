@@ -1,8 +1,8 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <iostream> // for is_number
 using namespace std; // for is_number
-#include <string> // for setTemp
+#include <string.h> // for setTemp
+#include <ctype.h>
 
 // Data wire is conntec to the Arduino digital pin 4
 #define ONE_WIRE_BUS 4
@@ -21,6 +21,11 @@ int STBY = 2;   // A Channel STBY Pin
 int AIN1 = 3;   // A Channel Input 1
 int AIN2 = 7;   // A Channel Input 2
 int PWMA = 5;  // A Channel PWM
+
+// initialize light color to white
+int green = 255;
+int blue = 255;
+int red = 255;
 
 // data points storage
 const int MAX_DATA = 10; // Maximum number of data points to store
@@ -44,9 +49,12 @@ void setup(void)
 }
 
 // helper: check if string is a number
-bool is_number(string str) {
+bool is_number(String str) {
+  if(str == ""){
+    return false;
+  }
   for (int i = 0; i< str.length(); i++) {
-    if (isdigit(str[i]) == false)
+    if (isdigit(str.charAt(i)) == false)
       return false;
   }
   return true;
@@ -55,11 +63,6 @@ bool is_number(string str) {
 void loop(void){ 
   // Call sensors.requestTemperatures() to issue a global temperature and Requests to all devices on the bus
   sensors.requestTemperatures(); 
-  
-  // Serial.print("Celsius temperature: ");
-  // Why "byIndex"? You can have more than one IC on the same bus. 0 refers to the first IC on the wire
-  // Serial.print(sensors.getTempCByIndex(0)); 
-  // Serial.print(" - Fahrenheit temperature: ");
   float a = sensors.getTempFByIndex(0);
   Serial.println(sensors.getTempFByIndex(0));
 
@@ -72,63 +75,86 @@ void loop(void){
   // }
 
   String serialListener = Serial.readString();
-  Serial.println(serialListener);
-  if (serialListener == "ON") {
-      analogWrite(redPin, 255);
-  }
-  else if (serialListener == "OFF") {
-      analogWrite(redPin, 0);
-  } 
-  else if (serialListener == "makeHotter") {
-    while (a < 90) {
+
+  if (serialListener == "makeHot") {
+    // heat drink until minimum of 136 degrees F
+    while (a < 136) {
       digitalWrite(AIN1, LOW); // red
       digitalWrite(AIN2, HIGH); // black
       analogWrite(PWMA, 170);
     }
+    digitalWrite(AIN1, LOW); // red
+    digitalWrite(AIN2, LOW); // black
+    analogWrite(PWMA, 0);
   }
-  else if (serialListener == "makeColder") {
-    while (a > 60) { // IDK IF THIS IS RIGHT
-      digitalWrite(AIN1, HIGH); // red
-      digitalWrite(AIN2, LOW); // black
+  else if (serialListener == "makeCold") {
+    // cool drink until minimum of 44 degrees F
+    while (a > 44) { 
+      digitalWrite(AIN1, HIGH); 
+      digitalWrite(AIN2, LOW); 
       analogWrite(PWMA, 170);
     }
+    // turn off peltier
+    digitalWrite(AIN1, LOW); 
+    digitalWrite(AIN2, LOW); 
+    analogWrite(PWMA, 0);
   }
   else if (is_number(serialListener)) {// start of setTemp
-    float temp = std::stof(serialListener); // convert string to float
-    if (temp > 60 || temp < 80) { // check if temp is in range IDK THE RANGES
-      analogWrite(greenPin, 0); // lets have a color indicate that we r warming/cooling
-      analogWrite(bluePin, 0);
-      analogWrite(redPin, 0);
-      // insert cooling or heating i forget
-      analogWrite(PWMA, 0);
+    float temp = serialListener.toFloat();
+
+    if (temp > 44 && temp < 136) { // check if temp is in the ideal range
+      sensors.requestTemperatures();
+      while (sensors.getTempFByIndex(0) > (temp + 1) || sensors.getTempFByIndex(0) < (temp)) {
+        sensors.requestTemperatures();
+        if (sensors.getTempFByIndex(0) < temp){
+          digitalWrite(AIN1, LOW); 
+          digitalWrite(AIN2, HIGH); 
+          analogWrite(PWMA, 170);
+
+          // turn on red light to indicate cooling
+          analogWrite(bluePin, 0);
+          analogWrite(greenPin, 0);
+          analogWrite(redPin, 255);
+
+          sensors.requestTemperatures();
+          Serial.println(sensors.getTempFByIndex(0));
+        }
+        else if (sensors.getTempFByIndex(0) > (temp - 1)) {
+          digitalWrite(AIN1, HIGH);
+          digitalWrite(AIN2, LOW); 
+          analogWrite(PWMA, 170);
+
+          // turn on blue light to indicate cooling
+          analogWrite(redPin, 0);
+          analogWrite(bluePin, 255);
+          analogWrite(greenPin, 0);
+
+          sensors.requestTemperatures();
+          Serial.println(sensors.getTempFByIndex(0));
+        }
+      }
     }
-    // otherwise don't change temp bc out of range
-    Serial.println("out of range");
+    // turn on green light
+    green = 255;
+    blue = 0;
+    red = 0;
+
+    digitalWrite(AIN1, LOW); 
+    digitalWrite(AIN2, LOW); 
+    analogWrite(PWMA, 0);
+  }
+  else{
+    // the light is white when first starting up
+    analogWrite(greenPin, green);
+    analogWrite(bluePin, blue);
+    analogWrite(redPin, red);
+
+    //this turns peltier off
+    digitalWrite(AIN1, LOW); 
+    digitalWrite(AIN2, LOW); 
+    analogWrite(PWMA, 0);
   }
 
   digitalWrite(STBY, HIGH);
-  
-  if (60 < a < 80) {
-    analogWrite(greenPin, 255);
-    analogWrite(bluePin, 0);
-    analogWrite(redPin, 0);
-    analogWrite(PWMA, 0);
-  }
-  if (a > 80) {
-    analogWrite(bluePin, 0);
-    analogWrite(greenPin, 0);
-    analogWrite(redPin, 255);
-    // digitalWrite(AIN1, HIGH); // red
-    // digitalWrite(AIN2, LOW); // black
-    analogWrite(PWMA, 170);
-  }
-  if (a < 60) {
-    analogWrite(redPin, 0);
-    analogWrite(bluePin, 255);
-    analogWrite(greenPin, 0);
-    // digitalWrite(AIN1, LOW); // red
-    // digitalWrite(AIN2, HIGH); // black
-    analogWrite(PWMA, 170);
-  }
   delay(1000);
 }
