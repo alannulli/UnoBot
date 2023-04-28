@@ -1,5 +1,8 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <iostream> // for is_number
+using namespace std; // for is_number
+#include <string> // for setTemp
 
 // Data wire is conntec to the Arduino digital pin 4
 #define ONE_WIRE_BUS 4
@@ -40,6 +43,15 @@ void setup(void)
   pinMode(PWMA, OUTPUT);
 }
 
+// helper: check if string is a number
+bool is_number(string str) {
+  for (int i = 0; i< str.length(); i++) {
+    if (isdigit(str[i]) == false)
+      return false;
+  }
+  return true;
+}
+
 void loop(void){ 
   // Call sensors.requestTemperatures() to issue a global temperature and Requests to all devices on the bus
   sensors.requestTemperatures(); 
@@ -73,6 +85,25 @@ void loop(void){
       digitalWrite(AIN2, HIGH); // black
       analogWrite(PWMA, 170);
     }
+  }
+  else if (serialListener == "makeColder") {
+    while (a > 60) { // IDK IF THIS IS RIGHT
+      digitalWrite(AIN1, HIGH); // red
+      digitalWrite(AIN2, LOW); // black
+      analogWrite(PWMA, 170);
+    }
+  }
+  else if (is_number(serialListener)) {// start of setTemp
+    float temp = std::stof(serialListener); // convert string to float
+    if (temp > 60 || temp < 80) { // check if temp is in range IDK THE RANGES
+      analogWrite(greenPin, 0); // lets have a color indicate that we r warming/cooling
+      analogWrite(bluePin, 0);
+      analogWrite(redPin, 0);
+      // insert cooling or heating i forget
+      analogWrite(PWMA, 0);
+    }
+    // otherwise don't change temp bc out of range
+    Serial.println("out of range");
   }
 
   digitalWrite(STBY, HIGH);

@@ -50,6 +50,17 @@ async def echo(ctx, arg):
     print('echoing')
     await ctx.send(arg)
 
+# listing commmands
+# @bot.command()
+# async def lst(ctx):
+#     print('listing commands')
+#     comm = {"lst":"returns list of commands",
+#             "getTemp":"returns the current temperature of drink",
+#             "tempRecs":"returns a list of recommended drink temperatures",
+#             "setTemp":""
+#             }
+#     await ctx.send(f'list of commands and descriptions:\n {comm}')
+
 # read arduino serial port
 @bot.command()
 async def getTemp(ctx):
@@ -62,12 +73,36 @@ async def getTemp(ctx):
 
 #TODO
 #tempRec command (print temp recs for hot, cold, and room temp drink)
+@bot.command()
+async def tempRecs(ctx):
+    print('getting temp recs')
+    hot_recs = "hot drinks: 125-136 Farenheit\n"
+    cold_recs = "cold drinks: 44-50 Farenheit\n"
+    room_recs = "room temp drinks: 68-74 Farenheit\n"
+    await ctx.send(f'Temperature recomendations:\n {hot_recs,cold_recs,room_recs}')
+
+#TODO
 #setTemp command (let user set whatever temp BUT have a max and min so people cant set to 400 or something)
+@bot.command()
+async def setTemp(ctx, arg):
+    print('setting temp')
+    data = str(arg)
+    ser.write(arg.encode())
+    if str(ser.read(5), encoding='utf-8') == "out of range": # IDK if this is right
+        await ctx.send(f'The temp u entered is not recommended for consumption! Please choose a temp between 44-136 Farenheit')
+    else:
+        # we should get temp of drink before printing right?
+        await ctx.send(f'Setting temp to: {data}')
 
 @bot.command()
 async def makeHotter(ctx):
     print('making hotter')
     ser.write('makeHotter'.encode())
+
+@bot.command()
+async def makeColder(ctx):
+    print('making colder')
+    ser.write('makeColder'.encode())
 
 # send data to serial port
 @bot.command()
